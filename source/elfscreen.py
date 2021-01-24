@@ -14,14 +14,32 @@ class ElfScreen:
 		self.lines = []
 		self.startbyte = 0
 		self.endbyte = 0
+		self.finalbyte = 0
 		self.cursormemory = 0
 		self.header1 = ''
 		self.header2 = ''
 		self.footer1 = ''
 		self.footer2 = ''
+		self.alt = False
 		
 	def curline(self):
 		return self.lines[self.pos[0]]
+	
+	def numlines(self):
+		return len(self.lines)
+	
+	def onlastline(self):
+		return self.curline().endswith(elffile.ElfFile.EOF)
+	
+	def islastline(self, line):
+		return line.endswith(elffile.ElfFile.EOF)
+	
+	def curbyte(self):
+		b = self.startbyte
+		for i in range(self.pos[0]):
+			b = b + len(self.lines[i].encode('utf-8'))
+		b = b + len((self.lines[self.pos[0]][:self.pos[1]]).encode('utf-8'))
+		return b
 	
 	def linelengthcheck(self):
 		self.pos[1] = self.cursormemory
@@ -85,11 +103,7 @@ class ElfScreen:
 		c1 = self.colors['BLACK_ON_WHITE']
 		c2 = self.colors['BLUE_ON_WHITE']
 		c3 = self.colors['GREEN_ON_WHITE']
-		self.footer1 = self.startbyte
-		for l in self.lines[:self.pos[0]]:
-			self.footer1 = self.footer1 + len(l.encode('utf-8'))
-		self.footer1 = self.footer1 + len((self.curline()[:self.pos[1]]).encode('utf-8'))
-		self.footer1 = str(self.footer1)
+		self.footer1 = str(self.curbyte())
 		try:
 			self.stdscr.addstr(self.h+1, 0, 'CHR:'.rjust(self.w-1-len(self.footer1)-len(self.footer2)), c1)
 			self.stdscr.addstr(self.footer1, c2)
@@ -98,7 +112,7 @@ class ElfScreen:
 		except curses.error:
 			pass
 	
-	def alt_g(self):
+	def gotobyte(self):
 		c1 = self.colors['BLACK_ON_WHITE']
 		gotobyte = ''
 		while True:

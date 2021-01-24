@@ -15,6 +15,7 @@ def main(stdscr):
 	
 	screen.lines = file.getnextrows(0, screen.h, screen.w)
 	screen.endbyte = file.file.tell()
+	screen.finalbyte = file.size
 	
 	while(True):
 		screen.printscreen()
