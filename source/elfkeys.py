@@ -2,13 +2,13 @@ import sys, curses
 
 cursorcheck = ['KEY_UP', 'KEY_DOWN', 'KEY_NPAGE', 'KEY_PPAGE']
 
-def onkeypress(key, screen, file):
+def onkeypress(key, screen):
 	
 	if key == 'KEY_UP':
 		if screen.pos[0] > 0:
 			screen.pos[0] = screen.pos[0] - 1
 		else:
-			prevrow = file.getprevrow(screen.startbyte, screen.w)
+			prevrow = screen.file.getprevrow(screen.startbyte, screen.w)
 			if prevrow == '':
 				screen.cursormemory = 0
 			else:
@@ -21,13 +21,13 @@ def onkeypress(key, screen, file):
 			screen.pos[1] = len(screen.curline()) - 1
 			screen.cursormemory = screen.pos[1]
 		else:
-			nextrow = file.getnextrow(screen.endbyte, screen.w)
+			nextrow = screen.file.getnextrow(screen.endbyte, screen.w)
 			screen.addnextrow(nextrow)
 	
 	elif key == 'KEY_LEFT':
 		if screen.pos[1] == 0:
 			if screen.pos[0] == 0:
-				prevrow = file.getprevrow(screen.startbyte, screen.w)
+				prevrow = screen.file.getprevrow(screen.startbyte, screen.w)
 				if prevrow != '':
 					screen.addprevrow(prevrow)
 					screen.pos[1] = len(screen.curline()) - 1
@@ -41,7 +41,7 @@ def onkeypress(key, screen, file):
 		if screen.pos[1] == len(screen.curline()) - 1:
 			if screen.pos[0] == screen.numlines() - 1:
 				if not screen.onlastline():
-					nextrow = file.getnextrow(screen.endbyte, screen.w)
+					nextrow = screen.file.getnextrow(screen.endbyte, screen.w)
 					screen.addnextrow(nextrow)
 					screen.pos[1] = 0
 			else:
@@ -55,12 +55,12 @@ def onkeypress(key, screen, file):
 			screen.pos = [screen.numlines()-1, len(screen.lines[-1])-1]
 			screen.cursormemory = screen.pos[1]
 		else:
-			nextrows = file.getnextrows(screen.endbyte, screen.h, screen.w)
+			nextrows = screen.file.getnextrows(screen.endbyte, screen.h, screen.w)
 			for row in nextrows:
 				screen.addnextrow(row)
 			
 	elif key == 'KEY_PPAGE':
-		prevrows = file.getprevrows(screen.startbyte, screen.h, screen.w)
+		prevrows = screen.file.getprevrows(screen.startbyte, screen.h, screen.w)
 		for row in reversed(prevrows):
 			screen.addprevrow(row)
 		if len(prevrows) == 0:
@@ -74,19 +74,20 @@ def onkeypress(key, screen, file):
 		elif screen.alt:
 			screen.alt = False
 			if key == 'G':
-				alt_g(screen, file)
-		
+				alt_shift_g(screen)
+				
+			
 	if key in cursorcheck:
 		screen.linelengthcheck()
 	else:
 		screen.cursormemory = screen.pos[1]
 
-def alt_g(screen, file):
+def alt_shift_g(screen):
 	gotobyte = screen.gotobyte()
-	if gotobyte > file.size:
-		gotobyte = file.size			
-	screen.lines = file.getrowsaround(gotobyte, screen.h, screen.w)
-	screen.startbyte = file.file.tell()
+	if gotobyte > screen.file.size:
+		gotobyte = screen.file.size			
+	screen.lines = screen.file.getrowsaround(gotobyte, screen.h, screen.w)
+	screen.startbyte = screen.file.file.tell()
 	screen.endbyte = screen.startbyte + len(''.join(screen.lines).encode('utf-8'))
 
 	p = screen.startbyte
@@ -104,4 +105,7 @@ def alt_g(screen, file):
 				x = x + 1
 			break
 		screen.pos[0] = screen.pos[0] + 1
-		p = p + length
+		p = p + length	
+	
+	
+	

@@ -3,9 +3,10 @@ import elffile
 
 class ElfScreen:
 	
-	def __init__(self, stdscr):
+	def __init__(self, stdscr, filename):
 		stdscr.clear()
 		
+		self.file = elffile.ElfFile(filename)
 		self.stdscr = stdscr
 		self.h = stdscr.getmaxyx()[0] - 2
 		self.w = stdscr.getmaxyx()[1]
@@ -16,14 +17,20 @@ class ElfScreen:
 		self.endbyte = 0
 		self.finalbyte = 0
 		self.cursormemory = 0
-		self.header1 = ''
-		self.header2 = ''
-		self.footer1 = ''
-		self.footer2 = ''
 		self.alt = False
+		self.inserted = {}
 		
 	def curline(self):
 		return self.lines[self.pos[0]]
+	
+	def curlinenum(self):
+		n = 0
+		b = self.curbyte()
+		for l in self.file.startlines:
+			if l > b:
+				return n
+			n = n + 1
+		return n
 	
 	def numlines(self):
 		return len(self.lines)
@@ -96,19 +103,34 @@ class ElfScreen:
 	def printheader(self):
 		c1 = self.colors['BLACK_ON_WHITE']
 		c2 = self.colors['BLUE_ON_WHITE']
-		self.stdscr.addstr(0, 0, self.header1, c1)
-		self.stdscr.addstr(self.header2.ljust(self.w - len(self.header1)), c2)
+		self.stdscr.addstr(0, 0, self.file.path, c1)
+		self.stdscr.addstr(self.file.name.ljust(self.w - len(self.file.path)), c2)
 
 	def printfooter(self):
 		c1 = self.colors['BLACK_ON_WHITE']
 		c2 = self.colors['BLUE_ON_WHITE']
 		c3 = self.colors['GREEN_ON_WHITE']
-		self.footer1 = str(self.curbyte())
+		c4 = self.colors['YELLOW_ON_WHITE']
+		c5 = self.colors['MAGENTA_ON_WHITE']
+		x = str(self.pos[1])
+		y = str(self.pos[0])
+		linenum = str(self.curlinenum())
+		pos = str(self.curbyte())
+		size = str(self.file.size)
+		footerstart = '['.rjust(self.w-20-len(x+y+linenum+pos+size))		
 		try:
-			self.stdscr.addstr(self.h+1, 0, 'CHR:'.rjust(self.w-1-len(self.footer1)-len(self.footer2)), c1)
-			self.stdscr.addstr(self.footer1, c2)
+			self.stdscr.addstr(self.h+1, 0, footerstart, c1)
+			self.stdscr.addstr(x, c5)
+			self.stdscr.addstr(',', c1)
+			self.stdscr.addstr(y, c5)
+			self.stdscr.addstr(']', c1)
+			self.stdscr.addstr('   LINE:', c1)
+			self.stdscr.addstr(linenum, c4)
+			self.stdscr.addstr('   BYTE:', c1)
+			self.stdscr.addstr(pos, c2)
 			self.stdscr.addstr('/', c1)
-			self.stdscr.addstr(self.footer2, c3)
+			self.stdscr.addstr(size, c3)
+			self.stdscr.addstr(' ', c1)
 		except curses.error:
 			pass
 	
@@ -163,5 +185,11 @@ def definecolors():
 	
 	curses.init_pair(10, curses.COLOR_RED, curses.COLOR_BLACK)
 	c['RED_ON_BLACK'] = curses.color_pair(10)
+	
+	curses.init_pair(11, curses.COLOR_YELLOW, curses.COLOR_WHITE)
+	c['YELLOW_ON_WHITE'] = curses.color_pair(11)
+							   
+	curses.init_pair(12, curses.COLOR_MAGENTA, curses.COLOR_WHITE)
+	c['MAGENTA_ON_WHITE'] = curses.color_pair(12)
 	
 	return c

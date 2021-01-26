@@ -9,7 +9,6 @@ class ElfFile:
 		self.name = os.path.basename(path)
 		self.path = os.path.abspath(path[:-1*len(self.name)]) + '/'
 		self.size = 0
-		self.linestarts = []
 		
 		ls = [0]
 		self.file.seek(0)

@@ -6,21 +6,16 @@ import elffile, elfscreen, elfkeys
 
 def main(stdscr):
 	
-	file = elffile.ElfFile(sys.argv[1])
-	screen = elfscreen.ElfScreen(stdscr)
-	screen.header1 = file.path
-	screen.header2 = file.name
-	screen.footer1 = str(0)
-	screen.footer2 = str(file.size)
+	screen = elfscreen.ElfScreen(stdscr, sys.argv[1])
 	
-	screen.lines = file.getnextrows(0, screen.h, screen.w)
-	screen.endbyte = file.file.tell()
-	screen.finalbyte = file.size
+	screen.lines = screen.file.getnextrows(0, screen.h, screen.w)
+	screen.endbyte = screen.file.file.tell()
+	screen.finalbyte = screen.file.size
 	
 	while(True):
 		screen.printscreen()
 		key = stdscr.getkey()
-		elfkeys.onkeypress(key, screen, file)
+		elfkeys.onkeypress(key, screen)
 
 
 
